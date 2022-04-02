@@ -10,15 +10,17 @@ import com.bastiaanjansen.otp.SecretGenerator;
 import com.bastiaanjansen.otp.TOTP;
 
 import javax.crypto.SecretKey;
+import java.security.KeyPair;
+import java.security.PrivateKey;
 import java.time.Duration;
 import java.util.Date;
 
 public class KeyManager {
     private TOTP totp;
-    private SecretKey key;
+    private PrivateKey key;
 
-    public KeyManager(SecretKey key,byte[] seed){       //Replico el totp con la seed que se me da
-        this.key=key;
+    public KeyManager(KeyPair key, byte[] seed){       //Replico el totp con la seed que se me da
+        this.key=key.getPrivate();
         TOTP.Builder builder = new TOTP.Builder(seed)
                 .withPeriod(Duration.ofSeconds(30))
                 .withPasswordLength(6)
@@ -26,7 +28,7 @@ public class KeyManager {
         totp = builder.build();
     }
 
-    public SecretKey getKey(String code) {           //Se le pide a la app que genere un String code con totp.now()
+    public PrivateKey getKey(String code) {           //Se le pide a la app que genere un String code con totp.now()
         if(!totp.verify(code))
             throw new RuntimeException("No coincide el codigo");
         return key;

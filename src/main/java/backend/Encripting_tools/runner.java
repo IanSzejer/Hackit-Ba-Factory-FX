@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 
 public class runner {
-    public static void main(String[] args) throws Exception {
+   /* public static void main(String[] args) throws Exception {
         final int keyLength = 256;
         try {
             File fil = new File("/Users/john/Desktop/demo2.txt");
@@ -41,5 +41,7 @@ public class runner {
 
 
         }
+
+    */
 }
 

