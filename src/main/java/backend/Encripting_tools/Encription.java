@@ -121,7 +121,7 @@ public class Encription {
         // Closing file
         fos.close();
         fis.close();
-        System.out.println("Encryption Done...");
+
 
     }
 
@@ -169,7 +169,6 @@ public class Encription {
         fos.write(decryptedData);
         fos.close();
         fis.close();
-        System.out.println("Decryption Done...");
     }
 
 
