@@ -19,22 +19,35 @@ public class KeyManager {
     private TOTP totp;
     private PrivateKey key;
 
-    public KeyManager(KeyPair key, byte[] seed){       //Replico el totp con la seed que se me da
-        this.key=key.getPrivate();
+    public KeyManager(){
+
+    }
+
+    public PrivateKey getKey(String code) {           //Se le pide a la app que genere un String code con totp.now()
+        if(!totp.verify(code))
+            return null;
+        return key;
+
+    }
+
+    public void addKey(PrivateKey key){
+        this.key=key;
+    }
+
+    public byte[] generateSeed(){
+        byte[] seed=SecretGenerator.generate();
         TOTP.Builder builder = new TOTP.Builder(seed)
                 .withPeriod(Duration.ofSeconds(30))
                 .withPasswordLength(6)
                 .withAlgorithm(HMACAlgorithm.SHA1);
         totp = builder.build();
+        return seed;
     }
 
-    public PrivateKey getKey(String code) {           //Se le pide a la app que genere un String code con totp.now()
-        if(!totp.verify(code))
-            throw new RuntimeException("No coincide el codigo");
-        return key;
-
+    public void resetKeyManager(){
+        key=null;
+        totp=null;
     }
-
 
 
 
