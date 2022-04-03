@@ -11,14 +11,17 @@ public class EncriptionHandler {
     public String encrypt(File file, boolean generateNewSeed){
         try {
             KeyPair keyPair = Encription.getKeyPair();
-            Encription.recursiveFileEncryptor(file, keyPair.getPublic());
+            Encription.recursiveFileEncryptor(file,keyPair.getPublic());
             keyManager.addKey(keyPair.getPrivate());
             if (generateNewSeed== true){
                 return Base64.getEncoder().encodeToString(keyManager.generateSeed());
             }
+
         }catch(Exception ex){
             ex.printStackTrace();
         }
+
+
         return null;
     }
 
@@ -28,7 +31,7 @@ public class EncriptionHandler {
         if (privateKey==null)
             return false;
         try {
-            Encription.recursiveFileDecryptor(file, privateKey);
+            Encription.recursiveFileDecryptor(file,privateKey);
         }catch(Exception ex){
             ex.printStackTrace();
         }

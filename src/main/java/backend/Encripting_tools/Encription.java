@@ -2,9 +2,7 @@ package backend.Encripting_tools;
 
 
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.security.*;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
@@ -45,56 +43,54 @@ public class Encription {
     }
 
     //Encriptamos los archivos de forma recursiva
-    public static void recursiveFileEncryptor(File currentFile, PublicKey publicKey) throws Exception{
+    public static void recursiveFileEncryptor(File currentFile,PublicKey key) throws Exception{
         if (currentFile==null)
             return;
         if (!currentFile.exists())
             throw new IllegalArgumentException("File doesnt exist");
         if(!currentFile.isDirectory()){              //Si no es un directorio, encriptar y terminar la rama
-            encrypt(currentFile, publicKey);
+            encrypt(currentFile,key);
             return;
         }
 
         if (currentFile.listFiles()==null)          //Si es un directorio vacio, terminar la rama
             return;
         for (File file: List.of(currentFile.listFiles())){
-            recursiveFileEncryptor(file,publicKey);
+            recursiveFileEncryptor(file,key);
         }
     }
 
 
-    public static void recursiveFileDecryptor(File currentFile, PrivateKey publicKey) throws Exception{
+    public static void recursiveFileDecryptor(File currentFile,PrivateKey privateKey) throws Exception{
         if (currentFile==null)
             return;
         if (!currentFile.exists())
             throw new IllegalArgumentException("File doesnt exist");
         if(!currentFile.isDirectory()){              //Si no es un directorio, encriptar y terminar la rama
-            decrypt(currentFile, publicKey);
+            decrypt(currentFile,privateKey);
             return;
         }
 
         if (currentFile.listFiles()==null)          //Si es un directorio vacio, terminar la rama
             return;
         for (File file: List.of(currentFile.listFiles())){
-            recursiveFileDecryptor(file,publicKey);
+            recursiveFileDecryptor(file,privateKey);
         }
     }
 
 
-    private static void encrypt(File files, PublicKey publicKey) throws Exception {
-        StringBuilder builder= new StringBuilder("");
-        Scanner scanner = new Scanner( files );
-        while(scanner.hasNextLine()){
-            builder.append(scanner.nextLine());
-            if(scanner.hasNextLine()) {
-                builder.append('\n');
-            }
-        }
-        String data = builder.toString();
-        scanner.close();
+    private static void encrypt(File files,PublicKey publicKey) throws Exception {
+        // Selecting a Image for operation
+        FileInputStream fis = new FileInputStream(
+                files);
+        byte data[] = new byte[fis.available()];
+
+        // Read the array
+        fis.read(data);
+
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-        int inputLen = data.getBytes().length;
+        int inputLen = data.length;
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         int offset = 0;
         byte[] cache;
@@ -102,9 +98,9 @@ public class Encription {
         // Cifrar segmentos de datos
         while (inputLen - offset > 0) {
             if (inputLen - offset > MAX_ENCRYPT_BLOCK) {
-                cache = cipher.doFinal(data.getBytes(), offset, MAX_ENCRYPT_BLOCK);
+                cache = cipher.doFinal(data, offset, MAX_ENCRYPT_BLOCK);
             } else {
-                cache = cipher.doFinal(data.getBytes(), offset, inputLen - offset);
+                cache = cipher.doFinal(data, offset, inputLen - offset);
             }
             out.write(cache, 0, cache.length);
             i++;
@@ -112,33 +108,39 @@ public class Encription {
         }
         byte[] encryptedData = out.toByteArray();
         out.close();
-        // Obtenga contenido cifrado usando base64 para la codificación y conviértalo en una cadena usando UTF-8 como estándar
-        // La cadena encriptada
-        String encryptedDataString= Base64.getEncoder().encodeToString(encryptedData);
-        File newFile= new File(files.getAbsolutePath()+".txt");
-        FileWriter fileWriter= new FileWriter(newFile);
-        fileWriter.write(encryptedDataString);
-        files.delete();
-        fileWriter.close();
+
+        // Opening a file for writing purpose
+        FileOutputStream fos = new FileOutputStream(
+                files);
+
+        // Writing new byte array value to image which
+        // will Encrypt it.c
+
+        fos.write(encryptedData);
+
+        // Closing file
+        fos.close();
+        fis.close();
+        System.out.println("Encryption Done...");
 
     }
 
 
-    private static void decrypt(File file, PrivateKey privateKey) throws Exception {
-        StringBuilder builder= new StringBuilder("");
-        Scanner scanner = new Scanner( file );
-        while(scanner.hasNextLine()){
-            builder.append(scanner.nextLine());
-            if(scanner.hasNextLine()) {
-                builder.append('\n');
-            }
-        }
-        String data = builder.toString();
-        scanner.close();
+    private static void decrypt(File file,PrivateKey privateKey) throws Exception {
+        FileInputStream fis = new FileInputStream(
+                file);
+
+        // Converting image into byte array,it will
+        // Create a array of same size as image.
+        byte data[] = new byte[fis.available()];
+
+        // Read the array
+
+        fis.read(data);
+
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
-        byte[] dataBytes = Base64.getDecoder().decode(data);
-        int inputLen = dataBytes.length;
+        int inputLen = data.length;
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         int offset = 0;
         byte[] cache;
@@ -146,9 +148,9 @@ public class Encription {
         // Descifrar segmentos de datos
         while (inputLen - offset > 0) {
             if (inputLen - offset > MAX_DECRYPT_BLOCK) {
-                cache = cipher.doFinal(dataBytes, offset, MAX_DECRYPT_BLOCK);
+                cache = cipher.doFinal(data, offset, MAX_DECRYPT_BLOCK);
             } else {
-                cache = cipher.doFinal(dataBytes, offset, inputLen - offset);
+                cache = cipher.doFinal(data, offset, inputLen - offset);
             }
             out.write(cache, 0, cache.length);
             i++;
@@ -156,15 +158,18 @@ public class Encription {
         }
         byte[] decryptedData = out.toByteArray();
         out.close();
-        // Contenido descifrado
-        String decryptedDataString = new String(decryptedData, "UTF-8");
-        String fileNewName= file.getAbsolutePath();
-        fileNewName = fileNewName.substring(0,fileNewName.length()-4);  //Sacamos el .txt final
-        File newFile = new File(fileNewName);
-        FileWriter fileWriter= new FileWriter(fileNewName);
-        fileWriter.write(decryptedDataString);
-        fileWriter.close();
-        file.delete();
+
+
+
+        // Opening file for writting purpose
+        FileOutputStream fos = new FileOutputStream(
+                file);
+
+        // Writting Decrypted data on Image
+        fos.write(decryptedData);
+        fos.close();
+        fis.close();
+        System.out.println("Decryption Done...");
     }
 
 
