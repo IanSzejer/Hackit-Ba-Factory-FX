@@ -35,7 +35,7 @@ public class KeyManager {
     }
 
     public byte[] generateSeed(){
-        byte[] seed=SecretGenerator.generate();
+        byte[] seed=ShortSecretGenerator.generate();
         TOTP.Builder builder = new TOTP.Builder(seed)
                 .withPeriod(Duration.ofSeconds(30))
                 .withPasswordLength(6)
